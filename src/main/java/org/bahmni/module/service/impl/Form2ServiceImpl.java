@@ -1,6 +1,6 @@
 package org.bahmni.module.service.impl;
 
-import org.bahmni.module.service.FormService;
+import org.bahmni.module.service.Form2Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +16,7 @@ import java.util.Map;
 import static org.bahmni.module.utils.ResourceUtils.convertResourceOutputToString;
 
 @Component
-public class FormServiceImpl implements FormService {
+public class Form2ServiceImpl implements Form2Service {
 
     private static final String FORM_NAME = "name";
     @Qualifier("openmrsJdbcTemplate")

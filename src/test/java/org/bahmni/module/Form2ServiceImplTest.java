@@ -1,7 +1,7 @@
 package org.bahmni.module;
 
-import org.bahmni.module.service.FormService;
-import org.bahmni.module.service.impl.FormServiceImpl;
+import org.bahmni.module.service.Form2Service;
+import org.bahmni.module.service.impl.Form2ServiceImpl;
 import org.bahmni.module.utils.ResourceUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,8 +29,8 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(ResourceUtils.class)
-public class FormServiceImplTest {
-    FormService formService;
+public class Form2ServiceImplTest {
+    Form2Service form2Service;
     @Mock
     private JdbcTemplate jdbcTemplate;
     @Mock
@@ -42,9 +42,9 @@ public class FormServiceImplTest {
         mockStatic(ResourceUtils.class);
         sql = "form list sql";
         when(convertResourceOutputToString(any(Resource.class))).thenReturn(sql);
-        formService = new FormServiceImpl();
-        setValuesForMemberFields(formService, "openmrsDbTemplate", jdbcTemplate);
-        setValuesForMemberFields(formService, "form2FormListResource", form2FormListResource);
+        form2Service = new Form2ServiceImpl();
+        setValuesForMemberFields(form2Service, "openmrsDbTemplate", jdbcTemplate);
+        setValuesForMemberFields(form2Service, "form2FormListResource", form2FormListResource);
     }
 
     @Test
@@ -58,7 +58,7 @@ public class FormServiceImplTest {
         formRows.add(formRow);
         when(jdbcTemplate.queryForList(formNameAndVersionSql)).thenReturn(formRows);
 
-        Map<String, Integer> formNameAndVersionMap = formService.getFormNamesWithLatestVersionNumber();
+        Map<String, Integer> formNameAndVersionMap = form2Service.getFormNamesWithLatestVersionNumber();
 
         assertEquals(3, formNameAndVersionMap.get("Vitals").intValue());
     }
@@ -67,7 +67,7 @@ public class FormServiceImplTest {
     public void shouldReturnEmptyMapWhenNoFormsAvailable() {
 
         when(jdbcTemplate.queryForList(sql)).thenReturn(new ArrayList<>());
-        Map<String, Integer> formNameAndVersionMap = formService.getFormNamesWithLatestVersionNumber();
+        Map<String, Integer> formNameAndVersionMap = form2Service.getFormNamesWithLatestVersionNumber();
 
         assertEquals(0, formNameAndVersionMap.size());
     }
@@ -77,7 +77,7 @@ public class FormServiceImplTest {
 
         addTestMocksBehavior();
 
-        final Map<String, String> allLatestFormPaths = formService.getAllLatestFormPaths();
+        final Map<String, String> allLatestFormPaths = form2Service.getAllLatestFormPaths();
 
         assertEquals(1, allLatestFormPaths.size());
         assertEquals("/home/bahmni/clinical_forms/Vitals_1.json", allLatestFormPaths.get("Vitals"));
@@ -103,7 +103,7 @@ public class FormServiceImplTest {
 
         addTestMocksBehavior();
 
-        final String formPath = formService.getFormPath("Vitals");
+        final String formPath = form2Service.getFormPath("Vitals");
         assertEquals("/home/bahmni/clinical_forms/Vitals_1.json", formPath);
         verify(jdbcTemplate).queryForList("sql to find form names and their paths");
         verify(ResourceUtils.class);
@@ -116,8 +116,8 @@ public class FormServiceImplTest {
         addTestMocksBehavior();
 
         // multiple calls
-        final String formPath = formService.getFormPath("Vitals");
-        formService.getFormPath("History Examination");
+        final String formPath = form2Service.getFormPath("Vitals");
+        form2Service.getFormPath("History Examination");
 
         assertEquals("/home/bahmni/clinical_forms/Vitals_1.json", formPath);
         verify(jdbcTemplate).queryForList("sql to find form names and their paths");

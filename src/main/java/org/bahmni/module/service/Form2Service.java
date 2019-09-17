@@ -2,7 +2,7 @@ package org.bahmni.module.service;
 
 import java.util.Map;
 
-public interface FormService {
+public interface Form2Service {
 
     Map<String, String> getAllLatestFormPaths();
 
