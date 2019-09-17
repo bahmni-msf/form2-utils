@@ -20,8 +20,10 @@ import java.util.Map;
 
 import static java.util.Collections.singletonList;
 import static org.bahmni.module.service.impl.CommonTestHelper.setValuesForMemberFields;
+import static org.bahmni.module.utils.ResourceUtils.convertResourceOutputToString;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
@@ -39,7 +41,7 @@ public class FormServiceImplTest {
     public void setUp() throws Exception {
         mockStatic(ResourceUtils.class);
         sql = "form list sql";
-        when(ResourceUtils.convertResourceOutputToString(any(Resource.class))).thenReturn(sql);
+        when(convertResourceOutputToString(any(Resource.class))).thenReturn(sql);
         formService = new FormServiceImpl();
         setValuesForMemberFields(formService, "openmrsDbTemplate", jdbcTemplate);
         setValuesForMemberFields(formService, "form2FormListResource", form2FormListResource);
@@ -72,8 +74,21 @@ public class FormServiceImplTest {
 
     @Test
     public void shouldReturnAllFormsAndTheirLocations() {
+
+        addTestMocksBehavior();
+
+        final Map<String, String> allLatestFormPaths = formService.getAllLatestFormPaths();
+
+        assertEquals(1, allLatestFormPaths.size());
+        assertEquals("/home/bahmni/clinical_forms/Vitals_1.json", allLatestFormPaths.get("Vitals"));
+        verify(jdbcTemplate).queryForList("sql to find form names and their paths");
+        verify(ResourceUtils.class);
+        convertResourceOutputToString(form2FormListResource);
+    }
+
+    private void addTestMocksBehavior() {
         final String qeuryForFormNamesAndPaths = "sql to find form names and their paths";
-        when(ResourceUtils.convertResourceOutputToString(form2FormListResource))
+        when(convertResourceOutputToString(form2FormListResource))
                 .thenReturn(qeuryForFormNamesAndPaths);
         final Map<String, Object> record = new HashMap<>();
         record.put("name", "Vitals");
@@ -81,9 +96,32 @@ public class FormServiceImplTest {
 
         when(jdbcTemplate.queryForList(qeuryForFormNamesAndPaths)).thenReturn(singletonList(record));
 
-        final Map<String, String> allLatestFormPaths = formService.getAllLatestFormPaths();
+    }
 
-        assertEquals(1, allLatestFormPaths.size());
-        assertEquals("/home/bahmni/clinical_forms/Vitals_1.json", allLatestFormPaths.get("Vitals"));
+    @Test
+    public void shouldReturnFormJsonPathFromGivenFormName() {
+
+        addTestMocksBehavior();
+
+        final String formPath = formService.getFormPath("Vitals");
+        assertEquals("/home/bahmni/clinical_forms/Vitals_1.json", formPath);
+        verify(jdbcTemplate).queryForList("sql to find form names and their paths");
+        verify(ResourceUtils.class);
+        convertResourceOutputToString(form2FormListResource);
+    }
+
+    @Test
+    public void verifyGetAllLatestFormPathsIsCalledOnlyOnce() {
+
+        addTestMocksBehavior();
+
+        // multiple calls
+        final String formPath = formService.getFormPath("Vitals");
+        formService.getFormPath("History Examination");
+
+        assertEquals("/home/bahmni/clinical_forms/Vitals_1.json", formPath);
+        verify(jdbcTemplate).queryForList("sql to find form names and their paths");
+        verify(ResourceUtils.class);
+        convertResourceOutputToString(form2FormListResource);
     }
 }

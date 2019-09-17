@@ -8,4 +8,6 @@ public interface FormService {
 
     Map<String, Integer> getFormNamesWithLatestVersionNumber();
 
+    String getFormPath(String formName);
+
 }

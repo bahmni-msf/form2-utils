@@ -24,6 +24,7 @@ public class FormServiceImpl implements FormService {
     JdbcTemplate openmrsDbTemplate;
     @Value("classpath:sql/form2FormList.sql")
     private Resource form2FormListResource;
+    private Map<String, String> allLatestFormPaths;
 
     public Map<String, String> getAllLatestFormPaths() {
         Map<String, String> formPaths = new HashMap<>();
@@ -50,6 +51,14 @@ public class FormServiceImpl implements FormService {
             formNameAndVersionMap.put(name, version);
         });
         return formNameAndVersionMap;
+    }
+
+    @Override
+    public String getFormPath(String formName) {
+        if(allLatestFormPaths == null) {
+            allLatestFormPaths = getAllLatestFormPaths();
+        }
+        return allLatestFormPaths.get(formName);
     }
 
     private List<Map<String, Object>> getLatestFormNamesWithVersion() {
