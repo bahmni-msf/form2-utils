@@ -3,6 +3,9 @@ package org.bahmni.module;
 import org.bahmni.module.service.Form2Service;
 import org.bahmni.module.service.impl.Form2ServiceImpl;
 import org.bahmni.module.utils.ResourceUtils;
+import org.hibernate.SQLQuery;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,19 +13,18 @@ import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.core.io.Resource;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Collections.singletonList;
 import static org.bahmni.module.service.impl.CommonTestHelper.setValuesForMemberFields;
 import static org.bahmni.module.utils.ResourceUtils.convertResourceOutputToString;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -32,7 +34,9 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class Form2ServiceImplTest {
     Form2Service form2Service;
     @Mock
-    private JdbcTemplate jdbcTemplate;
+    private SessionFactory sessionFactory;
+    @Mock
+    private Session session;
     @Mock
     private Resource form2FormListResource;
     private String sql;
@@ -43,7 +47,8 @@ public class Form2ServiceImplTest {
         sql = "form list sql";
         when(convertResourceOutputToString(any(Resource.class))).thenReturn(sql);
         form2Service = new Form2ServiceImpl();
-        setValuesForMemberFields(form2Service, "openmrsDbTemplate", jdbcTemplate);
+        when(sessionFactory.getCurrentSession()).thenReturn(session);
+        setValuesForMemberFields(form2Service, "sessionFactory", sessionFactory);
         setValuesForMemberFields(form2Service, "form2FormListResource", form2FormListResource);
     }
 
@@ -51,12 +56,11 @@ public class Form2ServiceImplTest {
     public void shouldReturnMapWithKeysAsFormNamesAndValuesAsLatestVersion() {
 
         String formNameAndVersionSql = "SELECT name , MAX(version) as version FROM form GROUP BY name";
-        Map<String, Object> formRow = new LinkedHashMap<>();
-        formRow.put("name", "Vitals");
-        formRow.put("version", "3");
-        List<Map<String, Object>> formRows = new ArrayList<>();
-        formRows.add(formRow);
-        when(jdbcTemplate.queryForList(formNameAndVersionSql)).thenReturn(formRows);
+        List<Object[]> formRow = new ArrayList<>();
+        formRow.add(Arrays.asList("Vitals", "3").toArray());
+        final SQLQuery sqlQuery = mock(SQLQuery.class);
+        when(session.createSQLQuery(formNameAndVersionSql)).thenReturn(sqlQuery);
+        when(sqlQuery.list()).thenReturn(formRow);
 
         Map<String, Integer> formNameAndVersionMap = form2Service.getFormNamesWithLatestVersionNumber();
 
@@ -66,7 +70,12 @@ public class Form2ServiceImplTest {
     @Test
     public void shouldReturnEmptyMapWhenNoFormsAvailable() {
 
-        when(jdbcTemplate.queryForList(sql)).thenReturn(new ArrayList<>());
+        String formNameAndVersionSql = "SELECT name , MAX(version) as version FROM form GROUP BY name";
+
+        final SQLQuery sqlQuery = mock(SQLQuery.class);
+        when(session.createSQLQuery(formNameAndVersionSql)).thenReturn(sqlQuery);
+        when(sqlQuery.list()).thenReturn(new ArrayList<>());
+
         Map<String, Integer> formNameAndVersionMap = form2Service.getFormNamesWithLatestVersionNumber();
 
         assertEquals(0, formNameAndVersionMap.size());
@@ -81,21 +90,16 @@ public class Form2ServiceImplTest {
 
         assertEquals(1, allLatestFormPaths.size());
         assertEquals("/home/bahmni/clinical_forms/Vitals_1.json", allLatestFormPaths.get("Vitals"));
-        verify(jdbcTemplate).queryForList("sql to find form names and their paths");
         verify(ResourceUtils.class);
         convertResourceOutputToString(form2FormListResource);
     }
 
     private void addTestMocksBehavior() {
-        final String qeuryForFormNamesAndPaths = "sql to find form names and their paths";
-        when(convertResourceOutputToString(form2FormListResource))
-                .thenReturn(qeuryForFormNamesAndPaths);
-        final Map<String, Object> record = new HashMap<>();
-        record.put("name", "Vitals");
-        record.put("value_reference", "/home/bahmni/clinical_forms/Vitals_1.json");
-
-        when(jdbcTemplate.queryForList(qeuryForFormNamesAndPaths)).thenReturn(singletonList(record));
-
+        List<Object[]> formRow = new ArrayList<>();
+        formRow.add(Arrays.asList("", "Vitals", "", "/home/bahmni/clinical_forms/Vitals_1.json").toArray());
+        final SQLQuery sqlQuery = mock(SQLQuery.class);
+        when(session.createSQLQuery(anyString())).thenReturn(sqlQuery);
+        when(sqlQuery.list()).thenReturn(formRow);
     }
 
     @Test
@@ -105,7 +109,6 @@ public class Form2ServiceImplTest {
 
         final String formPath = form2Service.getFormPath("Vitals");
         assertEquals("/home/bahmni/clinical_forms/Vitals_1.json", formPath);
-        verify(jdbcTemplate).queryForList("sql to find form names and their paths");
         verify(ResourceUtils.class);
         convertResourceOutputToString(form2FormListResource);
     }
@@ -120,7 +123,6 @@ public class Form2ServiceImplTest {
         form2Service.getFormPath("History Examination");
 
         assertEquals("/home/bahmni/clinical_forms/Vitals_1.json", formPath);
-        verify(jdbcTemplate).queryForList("sql to find form names and their paths");
         verify(ResourceUtils.class);
         convertResourceOutputToString(form2FormListResource);
     }
@@ -128,12 +130,11 @@ public class Form2ServiceImplTest {
     @Test
     public void shouldGetLatestVersionOfAGivenForm() {
         String formNameAndVersionSql = "SELECT name , MAX(version) as version FROM form GROUP BY name";
-        Map<String, Object> formRow = new LinkedHashMap<>();
-        formRow.put("name", "Vitals");
-        formRow.put("version", "3");
-        List<Map<String, Object>> formRows = new ArrayList<>();
-        formRows.add(formRow);
-        when(jdbcTemplate.queryForList(formNameAndVersionSql)).thenReturn(formRows);
+        List<Object[]> formRow = new ArrayList<>();
+        formRow.add(Arrays.asList("Vitals", "3").toArray());
+        final SQLQuery sqlQuery = mock(SQLQuery.class);
+        when(session.createSQLQuery(formNameAndVersionSql)).thenReturn(sqlQuery);
+        when(sqlQuery.list()).thenReturn(formRow);
 
         assertEquals(3, form2Service.getFormLatestVersion("Vitals"));
 

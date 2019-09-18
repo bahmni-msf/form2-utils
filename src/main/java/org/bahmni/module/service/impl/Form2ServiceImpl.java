@@ -1,11 +1,10 @@
 package org.bahmni.module.service.impl;
 
 import org.bahmni.module.service.Form2Service;
+import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -18,11 +17,9 @@ import static org.bahmni.module.utils.ResourceUtils.convertResourceOutputToStrin
 @Component
 public class Form2ServiceImpl implements Form2Service {
 
-    private static final String FORM_NAME = "name";
-    @Qualifier("openmrsJdbcTemplate")
     @Autowired
-    JdbcTemplate openmrsDbTemplate;
-    @Value("classpath:sql/form2FormList.sql")
+    private SessionFactory sessionFactory;
+    @Value("classpath:sql/formList.sql")
     private Resource form2FormListResource;
 
     private Map<String, String> allLatestFormPaths;
@@ -31,28 +28,28 @@ public class Form2ServiceImpl implements Form2Service {
 
     public Map<String, String> getAllLatestFormPaths() {
         Map<String, String> formPaths = new HashMap<>();
-        List<Map<String, Object>> forms = executeFormListQuery();
-        for (Map<String, Object> form : forms) {
-            String name = (String) form.get(FORM_NAME);
-            String valueReference = (String) form.get("value_reference");
+        List<Object[]> formRows = executeFormListQuery();
+        for (Object[] row : formRows) {
+            String name = (String) row[1];
+            String valueReference = (String) row[3];
             formPaths.put(name, valueReference);
         }
         return formPaths;
     }
 
-    private List<Map<String, Object>> executeFormListQuery() {
+    private List executeFormListQuery() {
         final String form2FormListQuery = convertResourceOutputToString(form2FormListResource);
-        return openmrsDbTemplate.queryForList(form2FormListQuery);
+        return sessionFactory.getCurrentSession().createSQLQuery(form2FormListQuery).list();
     }
 
     public Map<String, Integer> getFormNamesWithLatestVersionNumber() {
         LinkedHashMap<String, Integer> formNameAndVersionMap = new LinkedHashMap<>();
-        List<Map<String, Object>> forms = getLatestFormNamesWithVersion();
-        forms.forEach(form -> {
-            String name = (String) form.get(FORM_NAME);
-            int version = Integer.parseInt((String) form.get("version"));
+        List<Object[]> forms = getLatestFormNamesWithVersion();
+        for (Object[] row : forms) {
+            String name = (String) row[0];
+            int version = Integer.parseInt((String) row[1]);
             formNameAndVersionMap.put(name, version);
-        });
+        }
         return formNameAndVersionMap;
     }
 
@@ -71,7 +68,8 @@ public class Form2ServiceImpl implements Form2Service {
         return allLatestFormPaths.get(formName);
     }
 
-    private List<Map<String, Object>> getLatestFormNamesWithVersion() {
-        return openmrsDbTemplate.queryForList("SELECT name , MAX(version) as version FROM form GROUP BY name");
+    private List getLatestFormNamesWithVersion() {
+        return sessionFactory.getCurrentSession()
+                .createSQLQuery("SELECT name , MAX(version) as version FROM form GROUP BY name").list();
     }
 }
