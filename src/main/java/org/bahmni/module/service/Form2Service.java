@@ -10,4 +10,6 @@ public interface Form2Service {
 
     String getFormPath(String formName);
 
+    int getFormLatestVersion(String formName);
+
 }

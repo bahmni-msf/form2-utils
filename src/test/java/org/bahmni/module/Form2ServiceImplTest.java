@@ -124,4 +124,18 @@ public class Form2ServiceImplTest {
         verify(ResourceUtils.class);
         convertResourceOutputToString(form2FormListResource);
     }
+
+    @Test
+    public void shouldGetLatestVersionOfAGivenForm() {
+        String formNameAndVersionSql = "SELECT name , MAX(version) as version FROM form GROUP BY name";
+        Map<String, Object> formRow = new LinkedHashMap<>();
+        formRow.put("name", "Vitals");
+        formRow.put("version", "3");
+        List<Map<String, Object>> formRows = new ArrayList<>();
+        formRows.add(formRow);
+        when(jdbcTemplate.queryForList(formNameAndVersionSql)).thenReturn(formRows);
+
+        assertEquals(3, form2Service.getFormLatestVersion("Vitals"));
+
+    }
 }
