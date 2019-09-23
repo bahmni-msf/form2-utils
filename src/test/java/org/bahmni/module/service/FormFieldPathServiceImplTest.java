@@ -1,9 +1,12 @@
 package org.bahmni.module.service;
 
+import org.bahmni.module.exception.InvalidFormException;
 import org.bahmni.module.service.impl.Form2ReaderServiceImpl;
 import org.bahmni.module.service.impl.FormFieldPathServiceImpl;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 
 import static java.util.Arrays.asList;
@@ -13,9 +16,10 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 public class FormFieldPathServiceImplTest {
 
+    @Rule
+    public ExpectedException exception = ExpectedException.none();
     @Mock
     private Form2Service form2Service;
-
     private FormFieldPathService formFieldPathService;
 
     @Before
@@ -32,6 +36,16 @@ public class FormFieldPathServiceImplTest {
         final String formFieldPath = formFieldPathService.getFormFieldPath(asList("Vitals", "Height"));
 
         assertEquals("Vitals.1/1-0", formFieldPath);
+    }
+
+    @Test
+    public void shouldThrowInvalidFormExceptionIfInvalidFormNameIsGiven() {
+
+        when(form2Service.getFormPath("Vitals")).thenReturn(null);
+        exception.expect(InvalidFormException.class);
+        exception.expectMessage("Vitals not found");
+
+        formFieldPathService.getFormFieldPath(asList("Vitals", "Height"));
     }
 
     @Test

@@ -1,5 +1,6 @@
 package org.bahmni.module.service.impl;
 
+import org.bahmni.module.exception.InvalidFormException;
 import org.bahmni.module.model.Control;
 import org.bahmni.module.model.Form2JsonMetadata;
 import org.bahmni.module.service.Form2ReaderService;
@@ -7,6 +8,7 @@ import org.bahmni.module.service.Form2Service;
 import org.bahmni.module.service.FormFieldPathService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,6 +44,9 @@ public class FormFieldPathServiceImpl implements FormFieldPathService {
 
     private void initializeControlFormFieldPaths(String formName) {
         final String formJsonPath = form2Service.getFormPath(formName);
+        if (StringUtils.isEmpty(formJsonPath)) {
+            throw new InvalidFormException(format("%s not found", formName));
+        }
         final Form2JsonMetadata form2JsonMetadata = form2ReaderService.read(formJsonPath);
         final Integer formLatestVersion = form2Service.getFormLatestVersion(formName);
 
