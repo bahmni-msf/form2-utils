@@ -9,12 +9,18 @@
     <version>0.93-SNAPSHOT</version>
 
     <distributionManagement>
-        <snapshotRepository>
-            <id>repo.mybahmni.org</id>
-            <name>bahmni-artifactory-snapshots</name>
-            <url>s3://repo.mybahmni.org/artifactory/snapshot</url>
-        </snapshotRepository>
+        <repository>
+                <id>form2-utils</id>
+                <url>s3://s3.console.aws.amazon.com/s3/buckets/form2-utils</url>
+        </repository>
     </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>form2-utils</id>
+            <url>s3://s3.console.aws.amazon.com/s3/buckets/form2-utils</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
@@ -117,6 +123,13 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+        <extensions>
+            <extension>
+                <groupId>org.kuali.maven.wagons</groupId>
+                <artifactId>maven-s3-wagon</artifactId>
+                <version>1.2.1</version>
+            </extension>
+        </extensions>
     </build>
 
 </project>
