@@ -70,11 +70,15 @@ public class FormFieldPathServiceImpl implements FormFieldPathService {
         final List<Control> controls = control.getControls();
         if (controls != null) {
             controls.forEach(childControl
-                    -> initializeControlFormFieldPaths(childControl, currentOrderedControlNames, formFieldPath,
+                    -> initializeControlFormFieldPaths(childControl, currentOrderedControlNames, isAddMore(control)
+                            ? currentFormFieldPath : formFieldPath,
                     controlToFormFieldPath));
         }
     }
 
+    private boolean isAddMore(Control control) {
+        return control.getProperties().isAddMore();
+    }
 
     private String getFormFieldPath(String controlId, String formFieldPath) {
         return format("%s/%s-0", formFieldPath, controlId);
