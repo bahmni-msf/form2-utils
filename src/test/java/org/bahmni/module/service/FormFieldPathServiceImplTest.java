@@ -154,17 +154,17 @@ public class FormFieldPathServiceImplTest {
         final String visitDateObsFormFieldPath = formFieldPathService.getFormFieldPath(
                 asList("AddMoreInsideMultipleSections", "First Section", "Second Section Add More", "Third Section",
                         "Followup, Visit Date"));
-        assertEquals("AddMoreInsideMultipleSections.1/3-0/7-0", visitDateObsFormFieldPath);
+        assertEquals("AddMoreInsideMultipleSections.1/3-0/5-0/7-0", visitDateObsFormFieldPath);
 
         final String innerSectionFormFieldPath = formFieldPathService.getFormFieldPath(
                 asList("AddMoreInsideMultipleSections", "First Section", "Second Section Add More", "Third Section",
                         "Inner Section Add more"));
-        assertEquals("AddMoreInsideMultipleSections.1/3-0/8-0", innerSectionFormFieldPath);
+        assertEquals("AddMoreInsideMultipleSections.1/3-0/5-0/8-0", innerSectionFormFieldPath);
 
         final String heightObsFormFieldPath = formFieldPathService.getFormFieldPath(
                 asList("AddMoreInsideMultipleSections", "First Section", "Second Section Add More", "Third Section",
                         "Inner Section Add more", "Height (cm)"));
-        assertEquals("AddMoreInsideMultipleSections.1/3-0/8-0/9-0", heightObsFormFieldPath);
+        assertEquals("AddMoreInsideMultipleSections.1/3-0/5-0/8-0/9-0", heightObsFormFieldPath);
 
     }
 

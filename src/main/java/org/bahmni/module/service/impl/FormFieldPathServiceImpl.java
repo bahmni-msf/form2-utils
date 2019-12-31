@@ -57,22 +57,26 @@ public class FormFieldPathServiceImpl implements FormFieldPathService {
         final List<String> orderedControlNames = asList(formName);
         form2JsonMetadata.getControls().forEach(control -> {
             initializeControlFormFieldPaths(control, orderedControlNames, initialFormFieldPath,
-                    controlToFormFieldPath);
+                    controlToFormFieldPath, isAddMore(control));
         });
     }
 
     private void initializeControlFormFieldPaths(Control control, List<String> orderedControlNames,
-                                                 String formFieldPath, Map<String, String> controlToFormFieldPath) {
+                                                 String formFieldPath, Map<String, String> controlToFormFieldPath, Boolean isControlAddMore) {
         final List<String> currentOrderedControlNames = new ArrayList<>(orderedControlNames);
         currentOrderedControlNames.add(control.getLabel().getValue());
         final String currentFormFieldPath = getFormFieldPath(control.getId(), formFieldPath);
         controlToFormFieldPath.put(currentOrderedControlNames.toString(), currentFormFieldPath);
         final List<Control> controls = control.getControls();
         if (controls != null) {
-            controls.forEach(childControl
-                    -> initializeControlFormFieldPaths(childControl, currentOrderedControlNames, isAddMore(control)
-                            ? currentFormFieldPath : formFieldPath,
-                    controlToFormFieldPath));
+            for(Control childControl : controls ){
+                if(isAddMore(control)){
+                    isControlAddMore = true;
+                }
+                initializeControlFormFieldPaths(childControl, currentOrderedControlNames,
+                        isControlAddMore ? currentFormFieldPath : formFieldPath,
+                        controlToFormFieldPath, isControlAddMore);
+            }
         }
     }
 
